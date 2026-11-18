@@ -124,13 +124,29 @@ async function startScanner() {
         if (decodedText === lastCode) return;
 
         lastCode = decodedText;
-        result.innerHTML =
-          "<b>Barcode terbaca:</b><br>" +
-          String(decodedText).replace(/[&<>"']/g, c =>
-            ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])
-          );
+       result.innerHTML =
+  "<b>Barcode terbaca:</b><br>" +
+  String(decodedText);
 
-        status.textContent = "Barcode berhasil dibaca!";
+status.textContent = "Barcode berhasil dibaca!";
+
+if (window.opener && !window.opener.closed) {
+  window.opener.postMessage(
+    {
+      type: "IDOLAMU_BARCODE",
+      barcode: String(decodedText).trim()
+    },
+    "*"
+  );
+
+  status.textContent =
+    "Barcode berhasil dikirim ke Idolamu!";
+
+  setTimeout(() => {
+    stopScanner();
+    window.close();
+  }, 700);
+}
       },
       () => {}
     );
