@@ -1,0 +1,170 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Idolamu Live Barcode Scanner</title>
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+      padding: 20px;
+      color: #202833;
+    }
+    .container {
+      max-width: 500px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+    }
+    h2 { margin-top: 0; }
+    button {
+      width: 100%;
+      padding: 13px;
+      border: 0;
+      border-radius: 7px;
+      background: #24374a;
+      color: white;
+      font-size: 15px;
+      margin: 7px 0;
+    }
+    #reader {
+      width: 100%;
+      margin-top: 15px;
+    }
+    #result {
+      padding: 14px;
+      background: #eef3f7;
+      border-radius: 7px;
+      margin-top: 15px;
+      overflow-wrap: anywhere;
+    }
+    .status {
+      font-size: 13px;
+      color: #64717d;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h2>Idolamu Live Scanner</h2>
+  <p class="status" id="status">Scanner belum dijalankan.</p>
+
+  <button onclick="startScanner()">Aktifkan Kamera Belakang</button>
+  <button onclick="stopScanner()">Matikan Kamera</button>
+
+  <div id="reader"></div>
+
+  <div id="result">
+    Barcode: Belum terbaca
+  </div>
+</div>
+
+<script>
+let scanner = null;
+let running = false;
+let lastCode = "";
+
+async function startScanner() {
+  if (running) return;
+
+  const status = document.getElementById("status");
+  const result = document.getElementById("result");
+
+  if (!navigator.mediaDevices ||
+      !navigator.mediaDevices.getUserMedia) {
+    status.textContent = "Browser tidak mendukung akses kamera.";
+    return;
+  }
+
+  try {
+    status.textContent = "Memeriksa kamera...";
+
+    scanner = new Html5Qrcode("reader", {
+      formatsToSupport: [
+        Html5QrcodeSupportedFormats.EAN_13,
+        Html5QrcodeSupportedFormats.EAN_8,
+        Html5QrcodeSupportedFormats.UPC_A,
+        Html5QrcodeSupportedFormats.UPC_E,
+        Html5QrcodeSupportedFormats.CODE_128,
+        Html5QrcodeSupportedFormats.CODE_39,
+        Html5QrcodeSupportedFormats.ITF
+      ]
+    });
+
+    let cameras = await Html5Qrcode.getCameras();
+
+    if (!cameras || cameras.length === 0) {
+      throw new Error("Kamera tidak ditemukan.");
+    }
+
+    // Cari kamera belakang berdasarkan nama perangkat.
+    let backCamera = cameras.find(camera =>
+      /back|rear|environment|belakang/i.test(camera.label)
+    );
+
+    // Jika label belum tersedia, gunakan pilihan kamera belakang.
+    const cameraConfig = backCamera
+      ? backCamera.id
+      : { facingMode: "environment" };
+
+    status.textContent = "Mengaktifkan kamera belakang...";
+
+    await scanner.start(
+      cameraConfig,
+      {
+        fps: 12,
+        qrbox: { width: 280, height: 130 },
+        aspectRatio: 1.5
+      },
+      (decodedText) => {
+        if (decodedText === lastCode) return;
+
+        lastCode = decodedText;
+        result.innerHTML =
+          "<b>Barcode terbaca:</b><br>" +
+          String(decodedText).replace(/[&<>"']/g, c =>
+            ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])
+          );
+
+        status.textContent = "Barcode berhasil dibaca!";
+      },
+      () => {}
+    );
+
+    running = true;
+    status.textContent = "LIVE SCANNING · Arahkan barcode ke kamera.";
+
+  } catch (error) {
+    status.textContent = "Gagal: " + error.message;
+    console.error(error);
+    if (scanner) {
+      try { await scanner.stop(); } catch(e) {}
+      try { await scanner.clear(); } catch(e) {}
+    }
+    scanner = null;
+    running = false;
+  }
+}
+
+async function stopScanner() {
+  if (scanner && running) {
+    try {
+      await scanner.stop();
+      await scanner.clear();
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  scanner = null;
+  running = false;
+  document.getElementById("status").textContent =
+    "Kamera sudah dimatikan.";
+}
+</script>
+</body>
+</html>
