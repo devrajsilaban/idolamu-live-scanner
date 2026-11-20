@@ -133,7 +133,7 @@ status.textContent = "Barcode berhasil dibaca!";
 if (window.opener && !window.opener.closed) {
   window.opener.postMessage(
     {
-      type: "IDOLAMU_BARCODE_DETECTED",
+      type: "IDOLAMU_BARCODE",
       barcode: String(decodedText).trim()
     },
     "*"
