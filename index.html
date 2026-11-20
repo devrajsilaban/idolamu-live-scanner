@@ -4,9 +4,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Idolamu Live Barcode Scanner</title>
+  <title>Idolamu Smart Barcode Scanner</title>
 
-  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <!-- ZXing barcode decoding engine -->
+  <script src="https://unpkg.com/@zxing/library@0.21.3/umd/index.min.js"></script>
 
   <style>
     * {
@@ -46,17 +47,22 @@
 
     button:disabled {
       opacity: .5;
-      cursor: not-allowed;
     }
 
     #reader {
       width: 100%;
       margin-top: 15px;
-      overflow: hidden;
+      background: #111;
       border-radius: 8px;
+      overflow: hidden;
+      min-height: 220px;
     }
 
     #reader video {
+      display: block;
+      width: 100%;
+      height: auto;
+      min-height: 220px;
       object-fit: cover;
     }
 
@@ -66,7 +72,6 @@
       border-radius: 7px;
       margin-top: 15px;
       overflow-wrap: anywhere;
-      font-size: 14px;
     }
 
     .status {
@@ -78,8 +83,24 @@
     .scanner-info {
       font-size: 12px;
       color: #64717d;
-      margin-top: 12px;
       line-height: 1.5;
+      margin-top: 12px;
+    }
+
+    .scan-frame {
+      position: relative;
+    }
+
+    .scan-frame::after {
+      content: "";
+      position: absolute;
+      left: 8%;
+      right: 8%;
+      top: 25%;
+      bottom: 25%;
+      border: 2px solid rgba(255,255,255,.75);
+      border-radius: 8px;
+      pointer-events: none;
     }
   </style>
 </head>
@@ -88,7 +109,7 @@
 
 <div class="container">
 
-  <h2>Idolamu Live Scanner</h2>
+  <h2>Idolamu Smart Scanner</h2>
 
   <p class="status" id="status">
     Scanner belum dijalankan.
@@ -102,23 +123,25 @@
     Matikan Kamera
   </button>
 
-  <div id="reader"></div>
+  <div id="reader" class="scan-frame">
+    <video id="video" autoplay muted playsinline></video>
+  </div>
 
   <div id="result">
     Barcode: Belum terbaca
   </div>
 
   <div class="scanner-info">
-    High Precision Scanning · Small Barcode Detection
+    SMART SCANNING · SMALL BARCODE DETECTION
     <br>
-    Arahkan kamera ke barcode dan tunggu hingga fokus.
+    Arahkan barcode ke kamera dan tunggu hingga fokus.
   </div>
 
 </div>
 
 <script>
-
-let scanner = null;
+let reader = null;
+let controls = null;
 let running = false;
 let scanLocked = false;
 let lastCode = "";
@@ -126,18 +149,40 @@ let lastCode = "";
 const statusElement = document.getElementById("status");
 const resultElement = document.getElementById("result");
 const startButton = document.getElementById("startButton");
-const stopButton = document.getElementById("stopButton");
+const videoElement = document.getElementById("video");
 
-// Format barcode produk
-const BARCODE_FORMATS = [
-  Html5QrcodeSupportedFormats.EAN_13,
-  Html5QrcodeSupportedFormats.EAN_8,
-  Html5QrcodeSupportedFormats.UPC_A,
-  Html5QrcodeSupportedFormats.UPC_E,
-  Html5QrcodeSupportedFormats.CODE_128,
-  Html5QrcodeSupportedFormats.CODE_39,
-  Html5QrcodeSupportedFormats.ITF
-];
+// ==================================================
+// FORMAT BARCODE
+// ==================================================
+
+function createReader() {
+
+  const hints = new Map();
+
+  hints.set(
+    ZXing.DecodeHintType.POSSIBLE_FORMATS,
+    [
+      ZXing.BarcodeFormat.EAN_13,
+      ZXing.BarcodeFormat.EAN_8,
+      ZXing.BarcodeFormat.UPC_A,
+      ZXing.BarcodeFormat.UPC_E,
+      ZXing.BarcodeFormat.CODE_128,
+      ZXing.BarcodeFormat.CODE_39,
+      ZXing.BarcodeFormat.ITF
+    ]
+  );
+
+  // Meminta decoder melakukan pencarian lebih intensif.
+  hints.set(
+    ZXing.DecodeHintType.TRY_HARDER,
+    true
+  );
+
+  return new ZXing.BrowserMultiFormatReader(
+    hints,
+    100
+  );
+}
 
 
 // ==================================================
@@ -146,134 +191,60 @@ const BARCODE_FORMATS = [
 
 async function startScanner() {
 
-  if (running || scanner) return;
-
-  if (
-    !navigator.mediaDevices ||
-    !navigator.mediaDevices.getUserMedia
-  ) {
-    statusElement.textContent =
-      "Browser tidak mendukung akses kamera.";
-    return;
-  }
+  if (running) return;
 
   try {
+
+    if (!window.ZXing) {
+      throw new Error("Mesin barcode ZXing gagal dimuat. Periksa koneksi internet.");
+    }
+
+    if (
+      !navigator.mediaDevices ||
+      !navigator.mediaDevices.getUserMedia
+    ) {
+      throw new Error("Browser tidak mendukung akses kamera.");
+    }
 
     scanLocked = false;
     lastCode = "";
 
     startButton.disabled = true;
 
-    statusElement.textContent =
-      "Memeriksa kamera...";
-
     resultElement.textContent =
       "Barcode: Menunggu pemindaian...";
 
-    scanner = new Html5Qrcode("reader", {
-      formatsToSupport: BARCODE_FORMATS,
-      verbose: false
-    });
+    statusElement.textContent =
+      "Menyiapkan mesin pembaca barcode...";
 
-    const cameras = await Html5Qrcode.getCameras();
-
-    if (!cameras || cameras.length === 0) {
-      throw new Error("Kamera tidak ditemukan.");
-    }
-
-    // Prioritaskan kamera belakang
-    const backCamera = cameras.find(camera =>
-      /back|rear|environment|belakang/i.test(camera.label)
-    );
-
-    const cameraConfig = backCamera
-      ? backCamera.id
-      : { facingMode: "environment" };
+    reader = createReader();
 
     statusElement.textContent =
-      "Mengaktifkan kamera berkualitas tinggi...";
+      "Mengaktifkan kamera belakang...";
 
-    await scanner.start(
+    const constraints = {
+      audio: false,
+      video: {
+        facingMode: { ideal: "environment" },
+        width: { ideal: 1920 },
+        height: { ideal: 1080 }
+      }
+    };
 
-      cameraConfig,
+    controls = await reader.decodeFromConstraints(
+      constraints,
+      videoElement,
+      (result, error) => {
 
-      {
-        fps: 18,
+        if (scanLocked || !running) return;
 
-        // Tidak membatasi pemindaian hanya pada kotak kecil.
-        // Seluruh area video digunakan untuk membaca barcode.
-
-        aspectRatio: 16 / 9,
-
-        disableFlip: true,
-
-        videoConstraints: {
-          facingMode: "environment",
-          width: { ideal: 1920 },
-          height: { ideal: 1080 }
+        if (result) {
+          handleBarcode(result);
         }
 
-      },
-
-      // ==================================================
-      // BARCODE BERHASIL DIBACA
-      // ==================================================
-
-      async (decodedText) => {
-
-        if (scanLocked || !decodedText) return;
-
-        const barcode = String(decodedText).trim();
-
-        if (!barcode || barcode === lastCode) return;
-
-        scanLocked = true;
-        lastCode = barcode;
-
-        resultElement.innerHTML =
-          "<b>Barcode terbaca:</b><br>" +
-          barcode;
-
-        statusElement.textContent =
-          "Barcode berhasil dibaca!";
-
-        // Pertahankan koneksi lama ke Apps Script.
-        if (window.opener && !window.opener.closed) {
-
-          window.opener.postMessage(
-            {
-              type: "IDOLAMU_BARCODE",
-              barcode: barcode
-            },
-            "*"
-          );
-
-          statusElement.textContent =
-            "Barcode berhasil dikirim ke Idolamu!";
-
-          if (navigator.vibrate) {
-            navigator.vibrate(100);
-          }
-
-          setTimeout(async () => {
-            await stopScanner();
-            window.close();
-          }, 700);
-
-        } else {
-
-          statusElement.textContent =
-            "Barcode terbaca, tetapi jendela Idolamu tidak ditemukan.";
-
-          scanLocked = false;
-        }
-
-      },
-
-      // Callback kegagalan pembacaan individual.
-      // Tidak menampilkan error agar proses scanning tetap berjalan.
-      () => {}
-
+        // NotFoundException adalah kondisi normal
+        // ketika belum ada barcode yang ditemukan.
+      }
     );
 
     running = true;
@@ -281,30 +252,17 @@ async function startScanner() {
     statusElement.textContent =
       "LIVE SCANNING · Arahkan barcode ke kamera.";
 
-    // Optimasi kemampuan kamera setelah kamera aktif.
-    await optimizeCamera();
+    // Optimasi fokus dan zoom jika perangkat mendukung.
+    optimizeCamera();
 
   } catch (error) {
 
-    statusElement.textContent =
-      "Gagal: " + error.message;
-
     console.error("Scanner error:", error);
 
-    if (scanner) {
-      try {
-        if (running) await scanner.stop();
-      } catch (e) {}
+    statusElement.textContent =
+      "Gagal: " + (error.message || error);
 
-      try {
-        await scanner.clear();
-      } catch (e) {}
-    }
-
-    scanner = null;
-    running = false;
-    startButton.disabled = false;
-
+    await stopScanner(true);
   }
 }
 
@@ -315,58 +273,104 @@ async function startScanner() {
 
 async function optimizeCamera() {
 
-  if (!scanner || !running) return;
-
   try {
 
-    // Autofocus berkelanjutan jika didukung perangkat.
-    try {
-      await scanner.applyVideoConstraints({
-        advanced: [
-          { focusMode: "continuous" }
-        ]
-      });
-    } catch (e) {
-      console.log("Continuous focus tidak didukung.");
+    const stream = videoElement.srcObject;
+
+    if (!stream) return;
+
+    const track = stream.getVideoTracks()[0];
+
+    if (!track) return;
+
+    const capabilities =
+      track.getCapabilities ? track.getCapabilities() : {};
+
+    const advanced = {};
+
+    // Autofocus berkelanjutan jika didukung.
+    if (
+      capabilities.focusMode &&
+      capabilities.focusMode.includes("continuous")
+    ) {
+      advanced.focusMode = "continuous";
     }
 
-    // Periksa kemampuan zoom kamera.
-    try {
+    // Hindari zoom otomatis yang terlalu tinggi.
+    // Zoom dapat mengurangi area pandang kamera.
+    if (
+      capabilities.zoom &&
+      capabilities.zoom.min !== undefined
+    ) {
+      advanced.zoom = capabilities.zoom.min;
+    }
 
-      const capabilities =
-        scanner.getRunningTrackCapabilities();
-
-      if (
-        capabilities &&
-        capabilities.zoom &&
-        typeof capabilities.zoom.max === "number"
-      ) {
-
-        const minZoom = capabilities.zoom.min || 1;
-        const maxZoom = capabilities.zoom.max;
-
-        const targetZoom = Math.min(
-          Math.max(1.5, minZoom),
-          maxZoom
-        );
-
-        if (targetZoom > minZoom) {
-
-          await scanner.applyVideoConstraints({
-            advanced: [
-              { zoom: targetZoom }
-            ]
-          });
-
-        }
+    if (Object.keys(advanced).length > 0) {
+      try {
+        await track.applyConstraints({
+          advanced: [advanced]
+        });
+      } catch (error) {
+        console.log("Pengaturan kamera tidak didukung:", error);
       }
-
-    } catch (e) {
-      console.log("Zoom kamera tidak tersedia.");
     }
 
   } catch (error) {
-    console.log("Optimasi kamera menggunakan pengaturan default.");
+    console.log("Kamera menggunakan pengaturan default.");
+  }
+}
+
+
+// ==================================================
+// BARCODE DETECTED
+// ==================================================
+
+function handleBarcode(result) {
+
+  const barcode = String(result.getText() || "").trim();
+
+  if (!barcode || scanLocked || barcode === lastCode) {
+    return;
+  }
+
+  scanLocked = true;
+  lastCode = barcode;
+
+  resultElement.innerHTML =
+    "<b>Barcode terbaca:</b><br>" + barcode;
+
+  statusElement.textContent =
+    "Barcode berhasil dibaca!";
+
+  if (navigator.vibrate) {
+    navigator.vibrate(100);
+  }
+
+  // Pertahankan integrasi lama Idolamu.
+  if (window.opener && !window.opener.closed) {
+
+    window.opener.postMessage(
+      {
+        type: "IDOLAMU_BARCODE",
+        barcode: barcode
+      },
+      "*"
+    );
+
+    statusElement.textContent =
+      "Barcode berhasil dikirim ke Idolamu!";
+
+    setTimeout(async () => {
+      await stopScanner();
+      window.close();
+    }, 700);
+
+  } else {
+
+    statusElement.textContent =
+      "Barcode terbaca, tetapi jendela Idolamu tidak ditemukan.";
+
+    scanLocked = false;
   }
 }
 
@@ -375,35 +379,45 @@ async function optimizeCamera() {
 // STOP SCANNER
 // ==================================================
 
-async function stopScanner() {
+async function stopScanner(silent = false) {
 
   scanLocked = true;
 
-  if (scanner) {
-
+  if (controls) {
     try {
-      if (running) {
-        await scanner.stop();
-      }
+      controls.stop();
     } catch (error) {
-      console.error("Stop error:", error);
+      console.log(error);
     }
-
-    try {
-      await scanner.clear();
-    } catch (error) {
-      console.error("Clear error:", error);
-    }
-
   }
 
-  scanner = null;
+  controls = null;
+
+  if (videoElement.srcObject) {
+    videoElement.srcObject
+      .getTracks()
+      .forEach(track => track.stop());
+
+    videoElement.srcObject = null;
+  }
+
+  if (reader) {
+    try {
+      reader.reset();
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  reader = null;
   running = false;
 
   startButton.disabled = false;
 
-  statusElement.textContent =
-    "Kamera sudah dimatikan.";
+  if (!silent) {
+    statusElement.textContent =
+      "Kamera sudah dimatikan.";
+  }
 }
 
 </script>
