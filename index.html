@@ -513,15 +513,15 @@ function createReader() {
 // START SCANNER
 // ==================================================
 
-async function startScanner() {
-
-  if (running || startInProgress) return;
-
-  if (!window.ZXing) {
-    statusElement.textContent =
-      "ZXing gagal dimuat. Periksa koneksi internet.";
-    return;
+const constraints = {
+  audio: false,
+  video: {
+    facingMode: { ideal: "environment" },
+    width: { ideal: 1920 },
+    height: { ideal: 1080 },
+    frameRate: { ideal: 30 }
   }
+};
 
   if (
     !navigator.mediaDevices ||
