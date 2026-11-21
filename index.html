@@ -476,10 +476,11 @@ const detectionStatus = document.getElementById("detectionStatus");
 // CREATE ZXING READER
 // ==================================================
 
-function createReader() {
 
+function createReader() {
   const hints = new Map();
 
+  // Prioritaskan barcode 1D yang digunakan di gudang.
   hints.set(
     ZXing.DecodeHintType.POSSIBLE_FORMATS,
     [
@@ -493,16 +494,19 @@ function createReader() {
     ]
   );
 
+  // Matikan pencarian ekstra berat.
   hints.set(
     ZXing.DecodeHintType.TRY_HARDER,
-    true
+    false
   );
 
+  // Jangan memaksa decoder mencari format 2D.
   return new ZXing.BrowserMultiFormatReader(
     hints,
-    120
+    80
   );
 }
+
 
 
 // ==================================================
