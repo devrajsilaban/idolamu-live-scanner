@@ -1,11 +1,12 @@
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#24374a">
   <title>Idolamu Smart Barcode Scanner</title>
 
-  <!-- ZXing barcode decoding engine -->
   <script src="https://unpkg.com/@zxing/library@0.21.3/umd/index.min.js"></script>
 
   <style>
@@ -14,92 +15,205 @@
     }
 
     body {
+      margin: 0;
+      padding: 16px;
       font-family: Arial, sans-serif;
-      background: #f4f6f8;
-      padding: 20px;
+      background: #f1f4f7;
       color: #202833;
     }
 
     .container {
       max-width: 500px;
-      margin: auto;
+      margin: 10px auto;
+      padding: 18px;
       background: white;
-      padding: 20px;
-      border-radius: 12px;
+      border-radius: 14px;
+      box-shadow: 0 4px 18px rgba(0,0,0,.06);
     }
 
     h2 {
-      margin-top: 0;
+      margin: 0 0 7px;
+      color: #24374a;
+      font-size: 21px;
+    }
+
+    .status {
+      min-height: 40px;
+      color: #64717d;
+      font-size: 13px;
+      line-height: 1.5;
     }
 
     button {
       width: 100%;
       padding: 13px;
+      margin: 5px 0;
       border: 0;
-      border-radius: 7px;
+      border-radius: 8px;
       background: #24374a;
       color: white;
-      font-size: 15px;
-      margin: 7px 0;
+      font-size: 14px;
+      font-weight: 600;
       cursor: pointer;
     }
 
     button:disabled {
-      opacity: .5;
+      opacity: .45;
+      cursor: not-allowed;
     }
 
-    #reader {
+    button.secondary {
+      background: #e8edf2;
+      color: #24374a;
+    }
+
+    button.green {
+      background: #16834d;
+    }
+
+    .mode-switch {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin: 14px 0;
+    }
+
+    .mode-button {
+      background: #e8edf2;
+      color: #24374a;
+    }
+
+    .mode-button.active {
+      background: #24374a;
+      color: white;
+    }
+
+    .camera-box {
+      position: relative;
       width: 100%;
-      margin-top: 15px;
-      background: #111;
-      border-radius: 8px;
+      min-height: 230px;
+      margin-top: 12px;
+      background: #101820;
+      border-radius: 10px;
       overflow: hidden;
-      min-height: 220px;
     }
 
-    #reader video {
+    video {
       display: block;
       width: 100%;
-      height: auto;
-      min-height: 220px;
-      object-fit: cover;
-    }
-
-    #result {
-      padding: 14px;
-      background: #eef3f7;
-      border-radius: 7px;
-      margin-top: 15px;
-      overflow-wrap: anywhere;
-    }
-
-    .status {
-      font-size: 13px;
-      color: #64717d;
-      line-height: 1.5;
-    }
-
-    .scanner-info {
-      font-size: 12px;
-      color: #64717d;
-      line-height: 1.5;
-      margin-top: 12px;
+      min-height: 230px;
+      max-height: 430px;
+      object-fit: contain;
+      background: #101820;
     }
 
     .scan-frame {
-      position: relative;
-    }
-
-    .scan-frame::after {
-      content: "";
       position: absolute;
-      left: 8%;
-      right: 8%;
-      top: 25%;
-      bottom: 25%;
+      left: 6%;
+      right: 6%;
+      top: 32%;
+      height: 36%;
       border: 2px solid rgba(255,255,255,.75);
       border-radius: 8px;
       pointer-events: none;
+    }
+
+    .scan-frame::after {
+      content: "POSISIKAN BARCODE DI SINI";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: -25px;
+      color: white;
+      font-size: 10px;
+      text-align: center;
+      text-shadow: 0 1px 3px black;
+    }
+
+    .camera-label {
+      position: absolute;
+      top: 9px;
+      left: 9px;
+      padding: 5px 8px;
+      border-radius: 5px;
+      background: rgba(0,0,0,.6);
+      color: white;
+      font-size: 10px;
+      z-index: 2;
+    }
+
+    .photo-preview {
+      width: 100%;
+      max-height: 340px;
+      object-fit: contain;
+      display: block;
+      background: #101820;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .result {
+      margin-top: 14px;
+      padding: 14px;
+      border-radius: 8px;
+      background: #eef3f7;
+      overflow-wrap: anywhere;
+      line-height: 1.5;
+    }
+
+    .result.success {
+      background: #e8f7ed;
+      border: 1px solid #b9e5c8;
+    }
+
+    .result.error {
+      background: #fff0ed;
+      border: 1px solid #f0c5bd;
+    }
+
+    .result-code {
+      margin-top: 6px;
+      font-size: 20px;
+      font-weight: bold;
+      letter-spacing: .5px;
+    }
+
+    .zoom-box {
+      padding: 12px;
+      margin-top: 12px;
+      background: #f4f6f8;
+      border-radius: 8px;
+    }
+
+    .zoom-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    input[type="range"] {
+      width: 100%;
+    }
+
+    .info {
+      margin-top: 14px;
+      font-size: 12px;
+      color: #64717d;
+      line-height: 1.6;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 5px 9px;
+      background: #e6f4ec;
+      color: #16834d;
+      border-radius: 20px;
+      font-size: 10px;
+      font-weight: bold;
     }
   </style>
 </head>
@@ -110,52 +224,218 @@
 
   <h2>Idolamu Smart Scanner</h2>
 
+  <span class="badge" id="cameraBadge">CAMERA STANDBY</span>
+
   <p class="status" id="status">
-    Scanner belum dijalankan.
+    Pilih metode pemindaian dan aktifkan kamera.
   </p>
 
+  <div class="mode-switch">
+    <button
+      class="mode-button active"
+      id="photoModeButton"
+      onclick="selectMode('photo')">
+      FOTO & BACA
+    </button>
+
+    <button
+      class="mode-button"
+      id="liveModeButton"
+      onclick="selectMode('live')">
+      LIVE SCAN
+    </button>
+  </div>
+
   <button id="startButton" onclick="startScanner()">
-    Aktifkan Kamera Belakang
+    AKTIFKAN KAMERA BELAKANG
   </button>
 
-  <button id="stopButton" onclick="stopScanner()">
-    Matikan Kamera
+  <div class="camera-box" id="cameraBox">
+    <span class="camera-label" id="cameraLabel">PHOTO MODE</span>
+
+    <video
+      id="video"
+      autoplay
+      muted
+      playsinline>
+    </video>
+
+    <div class="scan-frame" id="scanFrame"></div>
+  </div>
+
+  <canvas id="captureCanvas" class="hidden"></canvas>
+
+  <div id="photoPreviewBox" class="hidden">
+    <p class="status">Foto hasil pengambilan:</p>
+    <img id="photoPreview" class="photo-preview" alt="Foto barcode">
+  </div>
+
+  <button
+    class="green hidden"
+    id="captureButton"
+    onclick="capturePhoto()">
+    AMBIL FOTO & BACA BARCODE
   </button>
 
-  <div id="reader" class="scan-frame">
-    <video id="video" autoplay muted playsinline></video>
+  <button
+    class="secondary hidden"
+    id="retakeButton"
+    onclick="retakePhoto()">
+    AMBIL FOTO ULANG
+  </button>
+
+  <button
+    class="secondary hidden"
+    id="retryButton"
+    onclick="retryDecode()">
+    COBA BACA FOTO LAGI
+  </button>
+
+  <button
+    class="secondary hidden"
+    id="focusButton"
+    onclick="refocusCamera()">
+    FOKUS ULANG
+  </button>
+
+  <button
+    class="secondary hidden"
+    id="torchButton"
+    onclick="toggleTorch()">
+    NYALAKAN FLASH
+  </button>
+
+  <div class="zoom-box">
+    <div class="zoom-label">
+      <span>ZOOM KAMERA</span>
+      <span id="zoomValue">Tidak tersedia</span>
+    </div>
+
+    <input
+      id="zoomSlider"
+      type="range"
+      min="1"
+      max="1"
+      step="0.1"
+      value="1"
+      disabled
+      oninput="changeZoom(this.value)">
   </div>
 
-  <div id="result">
-    Barcode: Belum terbaca
+  <button class="secondary" onclick="stopScanner()">
+    MATIKAN KAMERA
+  </button>
+
+  <div id="result" class="result">
+    <strong>BARCODE:</strong>
+    <div>Belum terbaca</div>
   </div>
 
-  <div class="scanner-info">
-    SMART SCANNING · SMALL BARCODE DETECTION
-    <br>
-    Arahkan barcode ke kamera dan tunggu hingga fokus.
+  <div class="info">
+    <strong>Petunjuk Foto & Baca:</strong><br>
+    1. Aktifkan kamera belakang.<br>
+    2. Tunggu kamera fokus pada barcode.<br>
+    3. Ambil foto barcode.<br>
+    4. Jika belum terbaca, ambil foto ulang atau coba baca lagi.<br>
+    5. Jika berhasil, barcode otomatis dikirim ke aplikasi Idolamu.
+    <br><br>
+    Untuk barcode melengkung, coba ambil foto dari sedikit sudut berbeda.
   </div>
 
 </div>
 
 <script>
-let reader = null;
-let controls = null;
-let running = false;
-let scanLocked = false;
-let lastCode = "";
-
-const statusElement = document.getElementById("status");
-const resultElement = document.getElementById("result");
-const startButton = document.getElementById("startButton");
-const videoElement = document.getElementById("video");
+"use strict";
 
 // ==================================================
-// FORMAT BARCODE
+// GLOBAL STATE
+// ==================================================
+
+let reader = null;
+let controls = null;
+let cameraStream = null;
+let cameraTrack = null;
+
+let running = false;
+let starting = false;
+let decoding = false;
+let scanLocked = false;
+
+let currentMode = "photo";
+let lastPhotoData = "";
+
+let torchOn = false;
+let currentZoom = 1;
+let zoomMin = 1;
+let zoomMax = 1;
+
+const $ = id => document.getElementById(id);
+
+const video = $("video");
+const canvas = $("captureCanvas");
+const context = canvas.getContext("2d", {
+  alpha: false
+});
+
+
+// ==================================================
+// UI HELPERS
+// ==================================================
+
+function setStatus(message) {
+  $("status").textContent = message;
+}
+
+function setBadge(message) {
+  $("cameraBadge").textContent = message;
+}
+
+function showElement(id, visible) {
+  $(id).classList.toggle("hidden", !visible);
+}
+
+function setResult(message, type = "") {
+  const box = $("result");
+
+  box.replaceChildren();
+
+  const heading = document.createElement("strong");
+  heading.textContent = "BARCODE:";
+
+  const value = document.createElement("div");
+  value.textContent = message;
+
+  box.append(heading, value);
+
+  box.classList.remove("success", "error");
+
+  if (type) {
+    box.classList.add(type);
+  }
+}
+
+function setBarcodeResult(barcode) {
+  const box = $("result");
+
+  box.replaceChildren();
+
+  const heading = document.createElement("strong");
+  heading.textContent = "BARCODE BERHASIL DIBACA:";
+
+  const value = document.createElement("div");
+  value.className = "result-code";
+  value.textContent = barcode;
+
+  box.append(heading, value);
+  box.classList.add("success");
+}
+
+
+// ==================================================
+// ZXING READER
 // ==================================================
 
 function createReader() {
-
   const hints = new Map();
 
   hints.set(
@@ -171,7 +451,6 @@ function createReader() {
     ]
   );
 
-  // Meminta decoder melakukan pencarian lebih intensif.
   hints.set(
     ZXing.DecodeHintType.TRY_HARDER,
     true
@@ -185,137 +464,620 @@ function createReader() {
 
 
 // ==================================================
+// MODE SELECTION
+// ==================================================
+
+async function selectMode(mode) {
+  if (currentMode === mode) return;
+
+  currentMode = mode;
+
+  await stopScanner(true);
+
+  $("photoModeButton").classList.toggle(
+    "active",
+    mode === "photo"
+  );
+
+  $("liveModeButton").classList.toggle(
+    "active",
+    mode === "live"
+  );
+
+  $("cameraLabel").textContent =
+    mode === "photo" ? "PHOTO MODE" : "LIVE SCANNING";
+
+  showElement("captureButton", false);
+  showElement("retakeButton", false);
+  showElement("retryButton", false);
+  showElement("photoPreviewBox", false);
+
+  $("scanFrame").classList.remove("hidden");
+
+  setResult("Belum terbaca");
+
+  setStatus(
+    mode === "photo"
+      ? "Mode Foto & Baca dipilih. Aktifkan kamera."
+      : "Mode Live Scan dipilih. Aktifkan kamera."
+  );
+
+  setBadge("CAMERA STANDBY");
+}
+
+
+// ==================================================
 // START SCANNER
 // ==================================================
 
 async function startScanner() {
+  if (running || starting) return;
 
-  if (running) return;
+  if (!window.ZXing) {
+    setStatus("ZXing gagal dimuat. Periksa koneksi internet.");
+    return;
+  }
+
+  if (
+    !navigator.mediaDevices ||
+    !navigator.mediaDevices.getUserMedia
+  ) {
+    setStatus("Browser tidak mendukung akses kamera.");
+    return;
+  }
+
+  starting = true;
+  $("startButton").disabled = true;
 
   try {
-
-    if (!window.ZXing) {
-      throw new Error("Mesin barcode ZXing gagal dimuat. Periksa koneksi internet.");
-    }
-
-    if (
-      !navigator.mediaDevices ||
-      !navigator.mediaDevices.getUserMedia
-    ) {
-      throw new Error("Browser tidak mendukung akses kamera.");
-    }
-
     scanLocked = false;
-    lastCode = "";
+    decoding = false;
+    lastPhotoData = "";
 
-    startButton.disabled = true;
-
-    resultElement.textContent =
-      "Barcode: Menunggu pemindaian...";
-
-    statusElement.textContent =
-      "Menyiapkan mesin pembaca barcode...";
+    setStatus("Menyiapkan kamera belakang...");
+    setBadge("STARTING");
 
     reader = createReader();
 
-    statusElement.textContent =
-      "Mengaktifkan kamera belakang...";
-
-    const constraints = {
-      audio: false,
-      video: {
-        facingMode: { ideal: "environment" },
-        width: { ideal: 1920 },
-        height: { ideal: 1080 }
-      }
-    };
-
-    controls = await reader.decodeFromConstraints(
-      constraints,
-      videoElement,
-      (result, error) => {
-
-        if (scanLocked || !running) return;
-
-        if (result) {
-          handleBarcode(result);
-        }
-
-        // NotFoundException adalah kondisi normal
-        // ketika belum ada barcode yang ditemukan.
-      }
-    );
-
-    running = true;
-
-    statusElement.textContent =
-      "LIVE SCANNING · Arahkan barcode ke kamera.";
-
-    // Optimasi fokus dan zoom jika perangkat mendukung.
-    optimizeCamera();
+    if (currentMode === "live") {
+      await startLiveScanner();
+    } else {
+      await startPhotoCamera();
+    }
 
   } catch (error) {
+    console.error("Scanner start error:", error);
 
-    console.error("Scanner error:", error);
+    setStatus(
+      "Gagal membuka kamera: " +
+      (error.message || String(error))
+    );
 
-    statusElement.textContent =
-      "Gagal: " + (error.message || error);
+    setBadge("CAMERA ERROR");
 
     await stopScanner(true);
+
+  } finally {
+    starting = false;
+    $("startButton").disabled = running;
   }
 }
 
 
 // ==================================================
-// CAMERA OPTIMIZATION
+// PHOTO MODE CAMERA
 // ==================================================
 
-async function optimizeCamera() {
+async function startPhotoCamera() {
+  const constraints = {
+    audio: false,
+    video: {
+      facingMode: { ideal: "environment" },
+      width: { ideal: 1920 },
+      height: { ideal: 1080 }
+    }
+  };
 
+  cameraStream =
+    await navigator.mediaDevices.getUserMedia(constraints);
+
+  cameraTrack = cameraStream.getVideoTracks()[0];
+
+  video.srcObject = cameraStream;
+
+  await video.play();
+
+  await waitForVideoReady();
+
+  running = true;
+
+  setBadge("PHOTO READY");
+  setStatus(
+    "Kamera aktif. Tunggu fokus, lalu tekan Ambil Foto."
+  );
+
+  showElement("captureButton", true);
+  showElement("focusButton", true);
+
+  await setupCameraControls();
+}
+
+
+// ==================================================
+// LIVE MODE CAMERA
+// ==================================================
+
+async function startLiveScanner() {
+  const constraints = {
+    audio: false,
+    video: {
+      facingMode: { ideal: "environment" },
+      width: { ideal: 1920 },
+      height: { ideal: 1080 }
+    }
+  };
+
+  controls = await reader.decodeFromConstraints(
+    constraints,
+    video,
+    (result, error) => {
+      if (!running || scanLocked) return;
+
+      if (result) {
+        handleBarcode(result);
+      }
+    }
+  );
+
+  running = true;
+
+  cameraStream = video.srcObject;
+
+  if (cameraStream) {
+    cameraTrack = cameraStream.getVideoTracks()[0];
+  }
+
+  await video.play().catch(() => {});
+
+  setBadge("LIVE");
+  setStatus("Live Scan aktif. Arahkan barcode ke kamera.");
+
+  showElement("focusButton", true);
+
+  await setupCameraControls();
+}
+
+
+// ==================================================
+// WAIT FOR VIDEO
+// ==================================================
+
+function waitForVideoReady() {
+  return new Promise((resolve, reject) => {
+    if (video.readyState >= 2 && video.videoWidth > 0) {
+      resolve();
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      cleanup();
+      reject(new Error("Kamera tidak menghasilkan gambar."));
+    }, 10000);
+
+    function cleanup() {
+      clearTimeout(timeout);
+      video.removeEventListener("loadedmetadata", ready);
+      video.removeEventListener("loadeddata", ready);
+    }
+
+    function ready() {
+      if (video.videoWidth > 0 && video.videoHeight > 0) {
+        cleanup();
+        resolve();
+      }
+    }
+
+    video.addEventListener("loadedmetadata", ready);
+    video.addEventListener("loadeddata", ready);
+  });
+}
+
+
+// ==================================================
+// CAMERA CONTROLS
+// ==================================================
+
+async function setupCameraControls() {
   try {
-
-    const stream = videoElement.srcObject;
-
-    if (!stream) return;
-
-    const track = stream.getVideoTracks()[0];
-
-    if (!track) return;
+    if (!cameraTrack) return;
 
     const capabilities =
-      track.getCapabilities ? track.getCapabilities() : {};
+      cameraTrack.getCapabilities
+        ? cameraTrack.getCapabilities()
+        : {};
 
-    const advanced = {};
+    const settings =
+      cameraTrack.getSettings
+        ? cameraTrack.getSettings()
+        : {};
 
-    // Autofocus berkelanjutan jika didukung.
+    console.log("IDOLAMU CAMERA INFO", {
+      width: settings.width,
+      height: settings.height,
+      frameRate: settings.frameRate,
+      focusMode: settings.focusMode,
+      zoom: settings.zoom
+    });
+
     if (
       capabilities.focusMode &&
       capabilities.focusMode.includes("continuous")
     ) {
-      advanced.focusMode = "continuous";
-    }
-
-    // Hindari zoom otomatis yang terlalu tinggi.
-    // Zoom dapat mengurangi area pandang kamera.
-    if (
-      capabilities.zoom &&
-      capabilities.zoom.min !== undefined
-    ) {
-      advanced.zoom = capabilities.zoom.min;
-    }
-
-    if (Object.keys(advanced).length > 0) {
       try {
-        await track.applyConstraints({
-          advanced: [advanced]
+        await cameraTrack.applyConstraints({
+          advanced: [
+            { focusMode: "continuous" }
+          ]
         });
       } catch (error) {
-        console.log("Pengaturan kamera tidak didukung:", error);
+        console.log("Autofocus default:", error);
       }
     }
 
+    if (
+      capabilities.zoom &&
+      Number.isFinite(capabilities.zoom.min) &&
+      Number.isFinite(capabilities.zoom.max)
+    ) {
+      zoomMin = capabilities.zoom.min;
+      zoomMax = capabilities.zoom.max;
+
+      currentZoom =
+        settings.zoom || zoomMin;
+
+      $("zoomSlider").min = zoomMin;
+      $("zoomSlider").max = zoomMax;
+      $("zoomSlider").step =
+        capabilities.zoom.step || 0.1;
+
+      $("zoomSlider").value = currentZoom;
+      $("zoomSlider").disabled = false;
+
+      $("zoomValue").textContent =
+        currentZoom.toFixed(1) + "x";
+    } else {
+      $("zoomValue").textContent = "Tidak tersedia";
+    }
+
+    if (capabilities.torch) {
+      $("torchButton").disabled = false;
+      showElement("torchButton", true);
+    } else {
+      showElement("torchButton", false);
+    }
+
   } catch (error) {
-    console.log("Kamera menggunakan pengaturan default.");
+    console.log("Camera controls:", error);
+  }
+}
+
+
+// ==================================================
+// ZOOM
+// ==================================================
+
+async function changeZoom(value) {
+  if (!cameraTrack || !running) return;
+
+  const zoom = Number(value);
+
+  try {
+    await cameraTrack.applyConstraints({
+      advanced: [
+        { zoom: zoom }
+      ]
+    });
+
+    currentZoom = zoom;
+
+    $("zoomValue").textContent =
+      zoom.toFixed(1) + "x";
+
+  } catch (error) {
+    console.log("Zoom error:", error);
+  }
+}
+
+
+// ==================================================
+// REFOCUS
+// ==================================================
+
+async function refocusCamera() {
+  if (!cameraTrack || !running) return;
+
+  try {
+    const capabilities =
+      cameraTrack.getCapabilities
+        ? cameraTrack.getCapabilities()
+        : {};
+
+    if (
+      capabilities.focusMode &&
+      capabilities.focusMode.includes("single-shot")
+    ) {
+      await cameraTrack.applyConstraints({
+        advanced: [
+          { focusMode: "single-shot" }
+        ]
+      });
+    }
+
+    if (
+      capabilities.focusMode &&
+      capabilities.focusMode.includes("continuous")
+    ) {
+      await new Promise(resolve =>
+        setTimeout(resolve, 500)
+      );
+
+      await cameraTrack.applyConstraints({
+        advanced: [
+          { focusMode: "continuous" }
+        ]
+      });
+    }
+
+    setStatus("Permintaan fokus ulang selesai.");
+
+  } catch (error) {
+    setStatus("Kamera menggunakan autofocus bawaan.");
+  }
+}
+
+
+// ==================================================
+// FLASH
+// ==================================================
+
+async function toggleTorch() {
+  if (!cameraTrack || !running) return;
+
+  try {
+    const capabilities =
+      cameraTrack.getCapabilities
+        ? cameraTrack.getCapabilities()
+        : {};
+
+    if (!capabilities.torch) {
+      setStatus("Flash tidak didukung perangkat ini.");
+      return;
+    }
+
+    torchOn = !torchOn;
+
+    await cameraTrack.applyConstraints({
+      advanced: [
+        { torch: torchOn }
+      ]
+    });
+
+    $("torchButton").textContent =
+      torchOn ? "MATIKAN FLASH" : "NYALAKAN FLASH";
+
+  } catch (error) {
+    torchOn = false;
+    setStatus("Flash tidak dapat diaktifkan.");
+  }
+}
+
+
+// ==================================================
+// CAPTURE PHOTO
+// ==================================================
+
+async function capturePhoto() {
+  if (!running || currentMode !== "photo") return;
+
+  if (
+    !video.videoWidth ||
+    !video.videoHeight ||
+    video.readyState < 2
+  ) {
+    setStatus("Kamera belum siap. Tunggu beberapa saat.");
+    return;
+  }
+
+  if (decoding) return;
+
+  try {
+    decoding = true;
+
+    $("captureButton").disabled = true;
+    showElement("retakeButton", false);
+    showElement("retryButton", false);
+
+    setStatus("Mengambil foto barcode...");
+    setBadge("CAPTURING");
+
+    // Gunakan resolusi asli frame kamera.
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    context.drawImage(
+      video,
+      0,
+      0,
+      canvas.width,
+      canvas.height
+    );
+
+    // Kualitas tinggi untuk foto barcode.
+    lastPhotoData = canvas.toDataURL(
+      "image/jpeg",
+      0.95
+    );
+
+    $("photoPreview").src = lastPhotoData;
+
+    showElement("photoPreviewBox", true);
+    showElement("scanFrame", false);
+
+    setStatus(
+      "Foto berhasil diambil. Sedang membaca barcode..."
+    );
+
+    setBadge("DECODING");
+
+    await decodeCapturedPhoto(lastPhotoData);
+
+  } catch (error) {
+    console.error("Capture error:", error);
+
+    setStatus(
+      "Gagal memproses foto: " +
+      (error.message || String(error))
+    );
+
+    showElement("retakeButton", true);
+
+  } finally {
+    decoding = false;
+
+    if (running && !scanLocked) {
+      $("captureButton").disabled = false;
+    }
+  }
+}
+
+
+// ==================================================
+// DECODE PHOTO
+// ==================================================
+
+async function decodeCapturedPhoto(imageData) {
+  if (!reader || !imageData) {
+    throw new Error("Foto atau mesin pembaca tidak tersedia.");
+  }
+
+  const image = new Image();
+
+  image.src = imageData;
+
+  await new Promise((resolve, reject) => {
+    image.onload = resolve;
+    image.onerror = () => {
+      reject(new Error("Gambar gagal dimuat."));
+    };
+  });
+
+  try {
+    // Decode gambar diam, bukan video live.
+    const result = await reader.decodeFromImageElement(image);
+
+    if (!result) {
+      throw new Error("Barcode tidak ditemukan.");
+    }
+
+    handleBarcode(result);
+
+  } catch (error) {
+    console.log("Photo decode failed:", error);
+
+    if (
+      error.name === "NotFoundException" ||
+      error.constructor?.name === "NotFoundException"
+    ) {
+      showPhotoNotFound();
+      return;
+    }
+
+    // ZXing dapat melempar NotFoundException sebagai
+    // bagian dari pencarian gambar tanpa hasil.
+    if (
+      String(error.message || "").toLowerCase().includes("not found")
+    ) {
+      showPhotoNotFound();
+      return;
+    }
+
+    showPhotoNotFound(
+      "Foto belum berhasil dibaca. Coba foto ulang dengan fokus lebih baik."
+    );
+  }
+}
+
+
+// ==================================================
+// PHOTO NOT FOUND
+// ==================================================
+
+function showPhotoNotFound(message) {
+  setBadge("NOT DETECTED");
+
+  setStatus(
+    message ||
+    "Barcode belum ditemukan. Coba atur fokus, jarak, atau pencahayaan."
+  );
+
+  setResult("Barcode belum terbaca. Silakan ambil foto ulang.", "error");
+
+  showElement("retakeButton", true);
+  showElement("retryButton", true);
+
+  $("captureButton").disabled = false;
+}
+
+
+// ==================================================
+// RETAKE PHOTO
+// ==================================================
+
+function retakePhoto() {
+  if (!running || currentMode !== "photo") return;
+
+  lastPhotoData = "";
+
+  showElement("photoPreviewBox", false);
+  showElement("retakeButton", false);
+  showElement("retryButton", false);
+  showElement("scanFrame", true);
+
+  $("photoPreview").removeAttribute("src");
+
+  $("captureButton").disabled = false;
+
+  setResult("Menunggu foto barcode.");
+
+  setBadge("PHOTO READY");
+
+  setStatus(
+    "Arahkan barcode ke kamera, tunggu fokus, lalu ambil foto."
+  );
+}
+
+
+// ==================================================
+// RETRY DECODING EXISTING PHOTO
+// ==================================================
+
+async function retryDecode() {
+  if (!lastPhotoData || decoding || scanLocked) return;
+
+  try {
+    decoding = true;
+
+    $("retryButton").disabled = true;
+
+    setStatus("Mencoba membaca ulang foto...");
+
+    setBadge("DECODING");
+
+    await decodeCapturedPhoto(lastPhotoData);
+
+  } finally {
+    decoding = false;
+    $("retryButton").disabled = false;
   }
 }
 
@@ -325,51 +1087,70 @@ async function optimizeCamera() {
 // ==================================================
 
 function handleBarcode(result) {
+  if (scanLocked) return;
 
-  const barcode = String(result.getText() || "").trim();
+  const barcode = String(
+    result.getText() || ""
+  ).trim();
 
-  if (!barcode || scanLocked || barcode === lastCode) {
-    return;
-  }
+  if (!barcode) return;
 
   scanLocked = true;
-  lastCode = barcode;
 
-  resultElement.innerHTML =
-    "<b>Barcode terbaca:</b><br>" + barcode;
+  setBarcodeResult(barcode);
 
-  statusElement.textContent =
-    "Barcode berhasil dibaca!";
+  setStatus("Barcode berhasil dibaca!");
+
+  setBadge("SUCCESS");
+
+  showElement("captureButton", false);
+  showElement("retakeButton", false);
+  showElement("retryButton", false);
 
   if (navigator.vibrate) {
     navigator.vibrate(100);
   }
 
-  // Pertahankan integrasi lama Idolamu.
+  // Integrasi tetap menggunakan pesan lama Idolamu.
   if (window.opener && !window.opener.closed) {
+    try {
+      window.opener.postMessage(
+        {
+          type: "IDOLAMU_BARCODE",
+          barcode: barcode
+        },
+        "*"
+      );
 
-    window.opener.postMessage(
-      {
-        type: "IDOLAMU_BARCODE",
-        barcode: barcode
-      },
-      "*"
-    );
+      setStatus(
+        "Barcode berhasil dikirim ke aplikasi Idolamu!"
+      );
 
-    statusElement.textContent =
-      "Barcode berhasil dikirim ke Idolamu!";
+      setTimeout(async () => {
+        await stopScanner(true);
+        window.close();
+      }, 700);
 
-    setTimeout(async () => {
-      await stopScanner();
-      window.close();
-    }, 700);
+    } catch (error) {
+      console.error("PostMessage error:", error);
+
+      scanLocked = false;
+
+      setStatus(
+        "Barcode terbaca, tetapi gagal dikirim ke aplikasi utama."
+      );
+    }
 
   } else {
+    setStatus(
+      "Barcode terbaca, tetapi jendela Idolamu tidak ditemukan."
+    );
 
-    statusElement.textContent =
-      "Barcode terbaca, tetapi jendela Idolamu tidak ditemukan.";
+    setBadge("NO CONNECTION");
 
-    scanLocked = false;
+    // Hasil tetap terlihat agar bisa diperiksa.
+    // Pengiriman hanya dapat dilakukan jika halaman
+    // dibuka dari jendela aplikasi utama.
   }
 }
 
@@ -379,45 +1160,96 @@ function handleBarcode(result) {
 // ==================================================
 
 async function stopScanner(silent = false) {
-
   scanLocked = true;
+  decoding = false;
 
-  if (controls) {
-    try {
+  try {
+    if (controls) {
       controls.stop();
-    } catch (error) {
-      console.log(error);
     }
+  } catch (error) {
+    console.log("Stop ZXing:", error);
   }
 
   controls = null;
 
-  if (videoElement.srcObject) {
-    videoElement.srcObject
-      .getTracks()
-      .forEach(track => track.stop());
-
-    videoElement.srcObject = null;
+  // Hentikan stream kamera baik dari mode foto maupun live.
+  if (cameraStream) {
+    cameraStream.getTracks().forEach(track => {
+      track.stop();
+    });
   }
+
+  if (video.srcObject) {
+    video.srcObject.getTracks().forEach(track => {
+      track.stop();
+    });
+  }
+
+  video.srcObject = null;
 
   if (reader) {
     try {
       reader.reset();
     } catch (error) {
-      console.log(error);
+      console.log("Reader reset:", error);
     }
   }
 
   reader = null;
-  running = false;
+  cameraStream = null;
+  cameraTrack = null;
 
-  startButton.disabled = false;
+  running = false;
+  starting = false;
+  torchOn = false;
+
+  $("startButton").disabled = false;
+  $("captureButton").disabled = false;
+
+  $("zoomSlider").disabled = true;
+  $("zoomValue").textContent = "Tidak tersedia";
+
+  $("torchButton").textContent = "NYALAKAN FLASH";
+
+  showElement("captureButton", false);
+  showElement("retakeButton", false);
+  showElement("retryButton", false);
+  showElement("focusButton", false);
+  showElement("torchButton", false);
+  showElement("photoPreviewBox", false);
+
+  $("scanFrame").classList.remove("hidden");
+
+  setBadge("CAMERA STANDBY");
 
   if (!silent) {
-    statusElement.textContent =
-      "Kamera sudah dimatikan.";
+    setStatus("Kamera sudah dimatikan.");
   }
 }
+
+
+// ==================================================
+// PAGE CLEANUP
+// ==================================================
+
+window.addEventListener("pagehide", () => {
+  try {
+    if (controls) {
+      controls.stop();
+    }
+  } catch (error) {
+    console.log(error);
+  }
+
+  if (cameraStream) {
+    cameraStream.getTracks().forEach(track => track.stop());
+  }
+
+  if (video.srcObject) {
+    video.srcObject.getTracks().forEach(track => track.stop());
+  }
+});
 
 </script>
 
