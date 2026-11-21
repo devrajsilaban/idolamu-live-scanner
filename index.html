@@ -652,7 +652,13 @@ async function setupCameraControls() {
       typeof cameraTrack.getSettings === "function"
         ? cameraTrack.getSettings()
         : {};
-
+console.log("IDOLAMU CAMERA DIAGNOSTIC", {
+  width: settings.width,
+  height: settings.height,
+  frameRate: settings.frameRate,
+  focusMode: settings.focusMode,
+  zoom: settings.zoom
+});
     // Continuous autofocus.
     if (
       capabilities.focusMode &&
